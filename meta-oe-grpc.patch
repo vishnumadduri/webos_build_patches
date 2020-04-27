@@ -1,0 +1,84 @@
+diff --git a/meta-networking/recipes-devtools/grpc/grpc/ttid_rename.patch b/meta-networking/recipes-devtools/grpc/grpc/ttid_rename.patch
+new file mode 100644
+index 000000000..b64ebd704
+--- /dev/null
++++ b/meta-networking/recipes-devtools/grpc/grpc/ttid_rename.patch
+@@ -0,0 +1,66 @@
++diff -r -u before/src/core/lib/gpr/log_linux.cc after/src/core/lib/gpr/log_linux.cc
++--- before/src/core/lib/gpr/log_linux.cc	2020-04-26 19:21:20.641923000 +0530
+++++ after/src/core/lib/gpr/log_linux.cc	2020-04-26 19:30:14.874344802 +0530
++@@ -39,8 +39,9 @@
++ #include <sys/syscall.h>
++ #include <time.h>
++ #include <unistd.h>
++-
++-static long gettid(void) { return syscall(__NR_gettid); }
+++// Not naming it as gettid() to avoid duplicate declarations when complied with
+++// GCC 9.1.
+++static long sys_gettid(void) { return syscall(__NR_gettid); }
++
++ void gpr_log(const char* file, int line, gpr_log_severity severity,
++              const char* format, ...) {
++@@ -70,7 +71,7 @@
++   gpr_timespec now = gpr_now(GPR_CLOCK_REALTIME);
++   struct tm tm;
++   static __thread long tid = 0;
++-  if (tid == 0) tid = gettid();
+++  if (tid == 0) tid = sys_gettid();
++
++   timer = static_cast<time_t>(now.tv_sec);
++   final_slash = strrchr(args->file, '/');
++diff -r -u before/src/core/lib/gpr/log_posix.cc after/src/core/lib/gpr/log_posix.cc
++--- before/src/core/lib/gpr/log_posix.cc	2020-04-26 19:21:20.641923000 +0530
+++++ after/src/core/lib/gpr/log_posix.cc	2020-04-26 19:31:00.528340030 +0530
++@@ -30,7 +30,7 @@
++ #include <string.h>
++ #include <time.h>
++
++-static intptr_t gettid(void) { return (intptr_t)pthread_self(); }
+++static intptr_t sys_gettid(void) { return (intptr_t)pthread_self(); }
++
++ void gpr_log(const char* file, int line, gpr_log_severity severity,
++              const char* format, ...) {
++@@ -85,7 +85,7 @@
++   char* prefix;
++   gpr_asprintf(&prefix, "%s%s.%09d %7tu %s:%d]",
++                gpr_log_severity_string(args->severity), time_buffer,
++-               (int)(now.tv_nsec), gettid(), display_file, args->line);
+++               (int)(now.tv_nsec), sys_gettid(), display_file, args->line);
++
++   fprintf(stderr, "%-70s %s\n", prefix, args->message);
++   gpr_free(prefix);
++diff -r -u before/src/core/lib/iomgr/ev_epollex_linux.cc after/src/core/lib/iomgr/ev_epollex_linux.cc
++--- before/src/core/lib/iomgr/ev_epollex_linux.cc	2020-04-26 19:21:20.649923000 +0530
+++++ after/src/core/lib/iomgr/ev_epollex_linux.cc	2020-04-26 19:31:50.007442520 +0530
++@@ -1166,7 +1166,7 @@
++ }
++
++ #ifndef NDEBUG
++-static long gettid(void) { return syscall(__NR_gettid); }
+++ static long sys_gettid(void) { return syscall(__NR_gettid); }
++ #endif
++
++ /* pollset->mu lock must be held by the caller before calling this.
++@@ -1186,7 +1186,7 @@
++ #define WORKER_PTR (&worker)
++ #endif
++ #ifndef NDEBUG
++-  WORKER_PTR->originator = gettid();
+++  WORKER_PTR->originator = sys_gettid();
++ #endif
++   if (grpc_polling_trace.enabled()) {
++     gpr_log(GPR_INFO,
+diff --git a/meta-networking/recipes-devtools/grpc/grpc_1.14.1.bb b/meta-networking/recipes-devtools/grpc/grpc_1.14.1.bb
+index d23671432..5f8ab162e 100644
+--- a/meta-networking/recipes-devtools/grpc/grpc_1.14.1.bb
++++ b/meta-networking/recipes-devtools/grpc/grpc_1.14.1.bb
+@@ -15,6 +15,7 @@ SRCREV = "d8020cb6daa87f1a3bb3b0c299bc081c4a3de1e8"
+ BRANCH = "v1.14.x"
+ SRC_URI = "git://github.com/grpc/grpc.git;protocol=https;branch=${BRANCH} \
+            file://0001-CMakeLists.txt-Fix-libraries-installation-for-Linux.patch \
++           file://ttid_rename.patch \
+            "
+ SRC_URI_append_class-target = " file://0001-CMakeLists.txt-Fix-grpc_cpp_plugin-path-during-cross.patch"
+ SRC_URI_append_class-nativesdk = " file://0001-CMakeLists.txt-Fix-grpc_cpp_plugin-path-during-cross.patch"

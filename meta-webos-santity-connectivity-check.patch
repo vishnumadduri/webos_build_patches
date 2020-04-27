@@ -1,0 +1,13 @@
+diff --git a/meta-webos/conf/distro/include/webos.inc b/meta-webos/conf/distro/include/webos.inc
+index 9c2de4b..8388031 100644
+--- a/meta-webos/conf/distro/include/webos.inc
++++ b/meta-webos/conf/distro/include/webos.inc
+@@ -345,7 +345,7 @@ https://.*/.*    http://downloads.yoctoproject.org/mirror/sources/ \n"
+ # the variable to be empty.
+ CONNECTIVITY_CHECK_URIS ?= " \
+     git://git.yoctoproject.org/yocto-firewall-test;protocol=git;rev=master \
+-    https://eula-downloads.yoctoproject.org/index.php \
++    https://www.google.com \
+     http://bugzilla.yoctoproject.org/report.cgi"
+ 
+ SANITY_TESTED_DISTROS ?= " \

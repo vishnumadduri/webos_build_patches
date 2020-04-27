@@ -1,0 +1,38 @@
+diff --git a/meta/recipes-devtools/qemu/qemu/time-compile-error.patch b/meta/recipes-devtools/qemu/qemu/time-compile-error.patch
+new file mode 100644
+index 0000000000..653b8a2c34
+--- /dev/null
++++ b/meta/recipes-devtools/qemu/qemu/time-compile-error.patch
+@@ -0,0 +1,20 @@
++--- before/linux-user/syscall.c	2020-04-24 13:47:02.401237000 +0530
+++++ after/linux-user/syscall.c	2020-04-24 15:54:25.184204620 +0530
++@@ -8520,11 +8520,13 @@
++ #ifdef TARGET_NR_stime /* not on alpha */
++     case TARGET_NR_stime:
++         {
++-            time_t host_time;
++-            if (get_user_sal(host_time, arg1))
+++            struct timespec ts;
+++            ts.tv_nsec = 0;
+++            if (get_user_sal(ts.tv_sec, arg1)) {
++                 goto efault;
++-            ret = get_errno(stime(&host_time));
++-        }
+++             }
+++            return get_errno(clock_settime(CLOCK_REALTIME, &ts));
+++        }
++         break;
++ #endif
++     case TARGET_NR_ptrace:
+diff --git a/meta/recipes-devtools/qemu/qemu_3.0.0.bb b/meta/recipes-devtools/qemu/qemu_3.0.0.bb
+index e483acab55..b47ee9b8f1 100644
+--- a/meta/recipes-devtools/qemu/qemu_3.0.0.bb
++++ b/meta/recipes-devtools/qemu/qemu_3.0.0.bb
+@@ -48,6 +48,7 @@ UPSTREAM_CHECK_REGEX = "qemu-(?P<pver>\d+(\.\d+)+)\.tar"
+ SRC_URI_append_class-native = " \
+             file://0012-fix-libcap-header-issue-on-some-distro.patch \
+             file://0013-cpus.c-Add-error-messages-when-qemi_cpu_kick_thread-.patch \
++            file://time-compile-error.patch \
+             "
+ 
+ SRC_URI[md5sum] = "6a5c8df583406ea24ef25b239c3243e0"
