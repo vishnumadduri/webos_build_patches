@@ -1,0 +1,12 @@
+diff --git a/meta/recipes-bsp/grub/grub2.inc b/meta/recipes-bsp/grub/grub2.inc
+index 8e0f86217c..6dcc2bbb40 100644
+--- a/meta/recipes-bsp/grub/grub2.inc
++++ b/meta/recipes-bsp/grub/grub2.inc
+@@ -46,6 +46,7 @@ EXTRA_OECONF = "--with-platform=${GRUBPLATFORM} \
+                 --enable-liblzma=no \
+                 --enable-libzfs=no \
+                 --enable-largefile \
++                --disable-werror \
+ "
+ 
+ PACKAGECONFIG ??= ""
